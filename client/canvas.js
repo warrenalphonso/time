@@ -1,4 +1,7 @@
-var canvas = document.getElementById("myCanvas")
+var canvas  = document.getElementById("myCanvas")
+canvas.width = document.body.clientWidth // document.width/height is obsolete
+canvas.height = document.body.clientHeight
+
 var context = canvas.getContext("2d")
 
 context.fillStyle = 'rgb(200, 0, 0)'
@@ -12,9 +15,11 @@ socket.on('load', players => { // load the current game state to client through 
 })
 
 socket.on('state', players => {
-    console.log(players)
+    // Clears the canvas for redrawing
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
     for (id in players) {
         var player = players[id]
-        context.fillRect(player.x,player.y,player.x+20,player.y+20);
+        context.fillRect(player.x, player.y, 20, 20);
     }
 })
