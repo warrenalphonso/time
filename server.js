@@ -37,20 +37,50 @@ server.listen(port, err => {
 
 
 
+var players = [] 
 
 // Runs when someone connects to server 
 io.on('connection', socket => {
     console.log('New socket connected.') 
 
-    // Creates new player 
-    
-    // Player moved 
+    // Creates new player, emited in socket.js 
+    socket.on('newPlayer', name => {
+        console.log(name) 
+        const startCoords = [1, 1] 
+        // Store player in dictionary of players 
+        players[socket.id] = {
+            name: name, 
+            x: startCoords[0], 
+            y: startCoords[1]
+        }
+        // Tell all sockets to reload 
+        io.sockets.emit('load', players)
+
+        var numPlayersOnline = Object.keys(players).length
+        console.log(`Players online: ${numPlayersOnline}.`)
+
+        var newColor;
+        if (numPlayersOnline == 1) {
+            newColor = 'red'
+        } else {
+            newColor = 'blue'
+        }
+    }) 
+
+    // When someone moves 
     socket.on('movement', (dx, dy) => {
         console.log('Someone moved.')
+        players[socket.id].x += dx 
+        players[socket.id].y += dy 
     })
-
+    
     // Player disconnects - weird functionality if closes browser 
     socket.on('disconnect', () => {
         console.log('Someone disconnected.')
     })
 })
+
+// Check game state 30 times a second and send to sockets 
+setInterval(() => {
+    io.sockets.emit('state', players)
+}, 1000 / 30) 
