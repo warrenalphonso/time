@@ -8,7 +8,7 @@ const app = express()
 // Use local port if Heroku isn't found 
 const port = process.env.PORT || 4000 
 
-// Why do we have to do this? 
+// From https://socket.io/get-started/chat/ 
 const http = require('http') 
 const server = http.createServer(app) 
 
@@ -16,7 +16,7 @@ const server = http.createServer(app)
 const io = require('socket.io')(server)
 
 // Serves static files from public directory 
-//app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'frontend')))
 
 // If GET '/running' works, server is ready
 app.get('/running', (req, res) => {
