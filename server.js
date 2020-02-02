@@ -16,7 +16,7 @@ const server = http.createServer(app)
 const io = require('socket.io')(server)
 
 // Serves static files from public directory 
-app.use(express.static(path.join(__dirname, 'frontend')))
+app.use(express.static(path.join(__dirname, 'client')))
 
 // If GET '/running' works, server is ready
 app.get('/running', (req, res) => {
@@ -27,7 +27,7 @@ app.get('/running', (req, res) => {
 
 // Shows game.html
 app.get('/', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'frontend/game.html'))
+    res.status(200).sendFile(path.join(__dirname, 'client/game.html'))
 }) 
 
 server.listen(port, err => {
