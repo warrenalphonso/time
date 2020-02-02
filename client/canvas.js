@@ -12,8 +12,9 @@ socket.on('load', players => { // load the current game state to client through 
 })
 
 socket.on('state', players => {
+    console.log(players)
     for (id in players) {
         var player = players[id]
-        context.fillRect(30,30,50,50);
+        context.fillRect(player.x,player.y,player.x+20,player.y+20);
     }
 })

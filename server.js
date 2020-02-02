@@ -37,7 +37,7 @@ server.listen(port, err => {
 
 
 
-var players = [] 
+var players = {}
 
 // Runs when someone connects to server 
 io.on('connection', socket => {
