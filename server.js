@@ -13,11 +13,20 @@ const port = process.env.PORT || 4000
 const http = require('http') 
 const server = http.createServer(app) 
 
+server.listen(port, err => {
+    if (err) throw err 
+    console.log(`Server started on port ${port}.`)
+})
+
 // Listens for new sockets on server
 const io = require('socket.io')(server)
 
 // Serves static files from public directory 
 app.use(express.static(path.join(__dirname, 'client')))
+
+// Support JSON-encoded and URL-encoded bodies 
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // If GET '/running' works, server is ready
 app.get('/running', (req, res) => {
@@ -28,12 +37,16 @@ app.get('/running', (req, res) => {
 
 // Shows game.html
 app.get('/', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'client/game.html'))
+    res.status(200).sendFile(path.join(__dirname, 'client/index.html'))
 }) 
 
-server.listen(port, err => {
-    if (err) throw err 
-    console.log(`Server started on port ${port}.`)
+/* 
+ * Login functionality
+ */
+
+app.post('/login', (req, res) => {
+    const name = req.body.name
+    console.log(name)
 })
 
 /*
