@@ -21,32 +21,109 @@ server.listen(port, err => {
 // Listens for new sockets on server
 const io = require('socket.io')(server)
 
-// Serves static files from public directory 
-app.use(express.static(path.join(__dirname, 'client')))
+// Setting up views directory for Pug 
+app.set('views', './client')
+app.set('view engine', 'pug')
+
+// Only serves public directory 
+app.use('/public', express.static(path.join(__dirname, 'client/public')))
 
 // Support JSON-encoded and URL-encoded bodies 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-// If GET '/running' works, server is ready
+// If GET '/running' works, server is ready - used to check if Heroku dyno is awake
 app.get('/running', (req, res) => {
     res.status(200).send({
         message: 'Server is up.'
     })
 }) 
 
-// Shows game.html
-app.get('/', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'client/index.html'))
-}) 
-
 /* 
- * Login functionality
+ * Login functionality. Flow: 
+ * 1. Client makes POST request to '/' with username 
+ * 2. Server checks for errors in input 
+ *      a. if error, redirects back to GET '/login' with params specifying errors
+ * 3. Server checks if any players are online 
+ *      a. if client is first, redirect GET '/login' with params specifying seed prompt
+ *      b. if client isn't first, load in existing world 
  */
 
-app.post('/login', (req, res) => {
+app.get('/', (req, res) => {
+    var msg = req.query.msg
+
+    var error
+    var login = `
+        <!-- Form POSTS to / -->
+        <form action="/" method="post">
+            <!-- The for field associates label with input with corresponding id -->
+            <label for="name">Name:</label> 
+            <input type="text" id="name" name="name" value="Joe Blow">
+            <br />
+            <button type="submit">Submit</button>
+        </form>
+    `
+    var seed
+
+    if (msg == encodeURIComponent('full')) {
+        error = "GAME FULL: 4 Players Currently Online"
+    } else if (msg == encodeURIComponent('invalid')) {
+        error = "INVALID NAME: Empty Name Provided"
+    } else if (msg == encodeURIComponent('seed')) {
+        // Don't ask for login
+        login = null
+        seed = `
+            <p>You get to choose a seed</p>
+            <form action="/" method="post">
+                <label for="seed">Seed:</label>
+                <input type="text" id="seed" name="seed" value="Breaks with empty string">
+                <br />
+                <button type="submit">Submit</button>
+            </form>
+        `
+    } 
+
+    res.render('index', { error, login, seed })
+}) 
+
+app.post('/', (req, res) => {
     const name = req.body.name
-    console.log(name)
+    const seed = req.body.seed
+
+    var msg;
+
+    if (Object.keys(players).length >= 4) {
+        // Error: Already 4 players online 
+        msg = encodeURIComponent('full')
+    }
+
+    if (name) {
+        // User just entered name 
+        if (name.length == 0) {
+            // Error: Invalid name
+            msg = encodeURIComponent('invalid')
+        } else if (Object.keys(players).length == 0) {
+            // Prompt for seed
+            msg = encodeURIComponent('seed')
+        } else {
+            // Join existing world 
+
+        }
+    } else if (seed) {
+        // User just entered seed; if world doesn't exist, create one with seed
+        
+    } else {
+        res.status(400).send('Bad POST request')
+        return
+    }
+
+    if (msg) {
+        // Something's wrong
+        res.redirect('/?msg=' + msg)
+    } else {
+        // Everything's ready - serve game to client
+        res.sendFile(path.join(__dirname, 'client/game.html')) 
+    }
 })
 
 /*
