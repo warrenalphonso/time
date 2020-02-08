@@ -1,5 +1,6 @@
-/** server.js */ 
-
+/*
+ * Server functionality
+ */
 
 const path = require('path') 
 const express = require('express') 
@@ -12,11 +13,20 @@ const port = process.env.PORT || 4000
 const http = require('http') 
 const server = http.createServer(app) 
 
+server.listen(port, err => {
+    if (err) throw err 
+    console.log(`Server started on port ${port}.`)
+})
+
 // Listens for new sockets on server
 const io = require('socket.io')(server)
 
 // Serves static files from public directory 
 app.use(express.static(path.join(__dirname, 'client')))
+
+// Support JSON-encoded and URL-encoded bodies 
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // If GET '/running' works, server is ready
 app.get('/running', (req, res) => {
@@ -27,23 +37,30 @@ app.get('/running', (req, res) => {
 
 // Shows game.html
 app.get('/', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'client/game.html'))
+    res.status(200).sendFile(path.join(__dirname, 'client/index.html'))
 }) 
 
-server.listen(port, err => {
-    if (err) throw err 
-    console.log(`Server started on port ${port}.`)
+/* 
+ * Login functionality
+ */
+
+app.post('/login', (req, res) => {
+    const name = req.body.name
+    console.log(name)
 })
 
-
+/*
+ * Game functionality through socket listener
+ */
 
 var players = {}
+const base_movespeed = 4
 
-// Runs when someone connects to server 
+// Called when someone connects to server 
 io.on('connection', socket => {
     console.log('New socket connected.') 
 
-    // Creates new player, emited in socket.js 
+    // Creates new player, emitted in socket.js 
     socket.on('newPlayer', name => {
         console.log(name) 
         const startCoords = [1, 1] 
@@ -68,19 +85,29 @@ io.on('connection', socket => {
     }) 
 
     // When someone moves 
-    socket.on('movement', (dx, dy) => {
-        console.log('Someone moved.')
-        players[socket.id].x += dx 
-        players[socket.id].y += dy 
+    socket.on('movement', movement => {
+        if (movement.up) {
+            players[socket.id].y -= base_movespeed
+        } 
+        if (movement.down) {
+            players[socket.id].y += base_movespeed
+        }
+        if (movement.left) {
+            players[socket.id].x -= base_movespeed
+        }
+        if (movement.right) {
+            players[socket.id].x += base_movespeed
+        }
     })
     
     // Player disconnects - weird functionality if closes browser 
     socket.on('disconnect', () => {
         console.log('Someone disconnected.')
+        delete players[socket.id]
     })
 })
 
 // Check game state 30 times a second and send to sockets 
 setInterval(() => {
     io.sockets.emit('state', players)
-}, 1000 / 30) 
+}, 1000 / 60) 
