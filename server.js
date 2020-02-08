@@ -42,7 +42,7 @@ app.get('/running', (req, res) => {
 /* 
  * Login functionality. Flow: 
  * 1. Client makes POST request to '/' with username 
- * 2. Server checks for errors in input 
+ * 1. Server checks for errors in input 
  *      a. if error, redirects back to GET '/login' with params specifying errors
  * 3. Server checks if any players are online 
  *      a. if client is first, redirect GET '/login' with params specifying seed prompt
@@ -54,8 +54,8 @@ app.get('/', (req, res) => {
 
     var error
     var login = `
-        <!-- Form POSTS to / -->
-        <form action="/" method="post">
+        <!-- Form POSTS to /name -->
+        <form action="/name" method="post">
             <!-- The for field associates label with input with corresponding id -->
             <label for="name">Name:</label> 
             <input type="text" id="name" name="name" value="Joe Blow">
@@ -73,57 +73,69 @@ app.get('/', (req, res) => {
         // Don't ask for login
         login = null
         seed = `
+            <!-- Form POSTS to /seed -->
             <p>You get to choose a seed</p>
-            <form action="/" method="post">
+            <form action="/seed" method="post">
                 <label for="seed">Seed:</label>
                 <input type="text" id="seed" name="seed" value="Breaks with empty string">
                 <br />
                 <button type="submit">Submit</button>
             </form>
         `
-    } 
+    } else if (msg == encodeURIComponent('game')) {
+        res.sendFile(path.join(__dirname, 'client/game.html'))
+        return
+    }
 
     res.render('index', { error, login, seed })
 }) 
 
-app.post('/', (req, res) => {
-    const name = req.body.name
-    const seed = req.body.seed
-
-    var msg;
-
+// Things we have to validate everytime user does something. Return nothing if no error 
+const continuousValidate = () => {
+    // Check if already 4 players online 
     if (Object.keys(players).length >= 4) {
-        // Error: Already 4 players online 
-        msg = encodeURIComponent('full')
+        return encodeURIComponent('full')
+    }
+}
+
+// We have to separate POSTs request because otherwise we were determining which 
+// request it was by checking boolean value of req.body.name or req.body.seed but 
+// that returns false if user inputted an empty string
+app.post('/name', (req, res) => {
+    const name = req.body.name 
+    var msg = continuousValidate()
+
+    // Check for problems with given name 
+    if (!msg && name.length == 0) {
+        msg = encodeURIComponent('invalid')
+    } 
+
+    // Check if user needs to input seed 
+    if (!msg && Object.keys(players).length == 0) {
+        msg = encodeURIComponent('seed')
     }
 
-    if (name) {
-        // User just entered name 
-        if (name.length == 0) {
-            // Error: Invalid name
-            msg = encodeURIComponent('invalid')
-        } else if (Object.keys(players).length == 0) {
-            // Prompt for seed
-            msg = encodeURIComponent('seed')
-        } else {
-            // Join existing world 
-
-        }
-    } else if (seed) {
-        // User just entered seed; if world doesn't exist, create one with seed
-        
-    } else {
-        res.status(400).send('Bad POST request')
-        return
+    // If nothing wrong, take to game 
+    if (!msg) {
+        msg = encodeURIComponent('game') 
     }
 
-    if (msg) {
-        // Something's wrong
-        res.redirect('/?msg=' + msg)
-    } else {
-        // Everything's ready - serve game to client
-        res.sendFile(path.join(__dirname, 'client/game.html')) 
+    res.redirect('/?msg=' + msg)
+})
+
+app.post('/seed', (req, res) => {
+    const seed = req.body.seed 
+    var msg 
+
+    // Check again to make sure a world isn't created 
+    
+    // Create world with seed and make it default world for everyone else 
+
+    if (!msg) {
+        msg = encodeURIComponent('game')
     }
+
+    res.redirect('/?msg=' + msg)
 })
 
 /*
