@@ -26,7 +26,8 @@ app.set('views', './client')
 app.set('view engine', 'pug')
 
 // Only serves public directory 
-app.use('/public', express.static(path.join(__dirname, 'client/public')))
+//app.use('/public', express.static(path.join(__dirname, 'client/public')))
+app.use(express.static(path.join(__dirname, 'client')))
 
 // Support JSON-encoded and URL-encoded bodies 
 app.use(express.json())
@@ -91,6 +92,7 @@ app.get('/', (req, res) => {
         res.sendFile(path.join(__dirname, 'client/game.html'))
         return
     }
+
 
     res.render('index', { error, login, seed })
 }) 
