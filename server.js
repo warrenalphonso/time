@@ -42,7 +42,7 @@ app.get('/running', (req, res) => {
 /* 
  * Login functionality. Flow: 
  * 1. Client makes POST request to '/' with username 
- * 1. Server checks for errors in input 
+ * 2. Server checks for errors in input 
  *      a. if error, redirects back to GET '/login' with params specifying errors
  * 3. Server checks if any players are online 
  *      a. if client is first, redirect GET '/login' with params specifying seed prompt
