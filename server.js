@@ -49,6 +49,11 @@ app.get('/running', (req, res) => {
  *      b. if client isn't first, load in existing world 
  */
 
+app.get('/game', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client/game.html'))
+})
+
+
 app.get('/', (req, res) => {
     var msg = req.query.msg
 
