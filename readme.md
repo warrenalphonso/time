@@ -1,7 +1,7 @@
-Anthony A Russos' Dev Branch
+(unnamed web game)
 ===
 
-Just testing markdown
+A browser-based multiplayer game centered on time-manipulation and other fun mechanics.
 ---
 
 *Italics*
