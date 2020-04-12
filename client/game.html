@@ -3,16 +3,19 @@
     <head>
         <title>Time: The Game</title>
         <link rel="stylesheet" type="text/css" href="public/styles.css">
-	<meta charset="utf-8">
+        
+        <!-- acornjs is a fast JavaScript parser which allows us to use ES6 in PaperScript. -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/acorn/6.3.0/acorn.js"></script>
+        
+        <meta charset="utf-8">
     </head> 
-    <body>
-        <h1>Hello game</h1>
-        <canvas id="myCanvas"></canvas>
-    </body>
-</html>
+    <body style="padding:0;">
+        <h1>Hello</h1>
+        <canvas id="myCanvas" resize="true" keepalive="true"></canvas>
+      </body>
+    </html>
 
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script type="text/javascript" src="public/socket.js"></script>
-<script type="text/javascript" src="https://threejs.org/build/three.js"></script>
 <script type="text/javascript" src="public/canvas.js"></script>
-
+<script type="text/paperscript" src="public/paperjs/tiles.js" canvas="myCanvas"></script>

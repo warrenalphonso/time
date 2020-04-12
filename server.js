@@ -26,8 +26,8 @@ app.set('views', './client')
 app.set('view engine', 'pug')
 
 // Only serves public directory 
-//app.use('/public', express.static(path.join(__dirname, 'client/public')))
-app.use(express.static(path.join(__dirname, 'client')))
+app.use('/public', express.static(path.join(__dirname, 'client/public')))
+//app.use(express.static(path.join(__dirname, 'client')))
 
 // Support JSON-encoded and URL-encoded bodies 
 app.use(express.json())
@@ -49,11 +49,6 @@ app.get('/running', (req, res) => {
  *      a. if client is first, redirect GET '/login' with params specifying seed prompt
  *      b. if client isn't first, load in existing world 
  */
-
-app.get('/game', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/game.html'))
-})
-
 
 app.get('/', (req, res) => {
     var msg = req.query.msg
@@ -150,7 +145,25 @@ app.post('/seed', (req, res) => {
  */
 
 var players = {}
-const base_movespeed = 4
+
+var blocks = [
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,0,0,0,0,0,1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1],
+  [1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+  [1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1],
+  [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+]
+
+const genStartCoords = () => {
+  return [1, 1]
+}
+
 
 // Called when someone connects to server 
 io.on('connection', socket => {
@@ -159,7 +172,7 @@ io.on('connection', socket => {
     // Creates new player, emitted in socket.js 
     socket.on('newPlayer', name => {
         console.log(name) 
-        const startCoords = [1, 1] 
+        const startCoords = genStartCoords()
         // Store player in dictionary of players 
         players[socket.id] = {
             name: name, 
@@ -167,7 +180,7 @@ io.on('connection', socket => {
             y: startCoords[1]
         }
         // Tell all sockets to reload 
-        io.sockets.emit('load', players)
+        io.sockets.emit('load', blocks, players)
 
         var numPlayersOnline = Object.keys(players).length
         console.log(`Players online: ${numPlayersOnline}.`)
@@ -181,20 +194,16 @@ io.on('connection', socket => {
     }) 
 
     // When someone moves 
-    socket.on('movement', movement => {
-        if (movement.up) {
-            players[socket.id].y -= base_movespeed
-        } 
-        if (movement.down) {
-            players[socket.id].y += base_movespeed
+    socket.on('movement', (dx, dy) => {
+        var replaceBlock = {
+          x: players[socket.id].x, 
+          y: players[socket.id].y,
+          block: blocks[players[socket.id].y][players[socket.id].x]
         }
-        if (movement.left) {
-            players[socket.id].x -= base_movespeed
-        }
-        if (movement.right) {
-            players[socket.id].x += base_movespeed
-        }
-    })
+        players[socket.id].x += dx 
+        players[socket.id].y += dy
+        io.sockets.emit('update', players[socket.id], replaceBlock)
+      })    
     
     // Player disconnects - weird functionality if closes browser 
     socket.on('disconnect', () => {
@@ -202,8 +211,3 @@ io.on('connection', socket => {
         delete players[socket.id]
     })
 })
-
-// Check game state 30 times a second and send to sockets 
-setInterval(() => {
-    io.sockets.emit('state', players)
-}, 1000 / 60) 
